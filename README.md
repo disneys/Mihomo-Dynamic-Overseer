@@ -29,4 +29,4 @@
 如果你发现了新的常见节点命名规律或图标 404，欢迎提交 Pull Request！
 
 ---
-Made with ❤️ by Huang Kai
+Made with ❤️ by Disneys
