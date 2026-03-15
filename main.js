@@ -148,6 +148,7 @@ function main(params) {
     // 订阅地址直连 (防止节点失效无法更新)
     "DOMAIN,sub.datapipe.top,DIRECT",
     "DOMAIN,suc-store.usuc.cc,DIRECT",
+    "DOMAIN,sub-aylz.koyeb.app,DIRECT",
 
     "GEOSITE,category-ads-all,广告拦截",
     "IP-CIDR,127.0.0.0/8,DIRECT,no-resolve",
