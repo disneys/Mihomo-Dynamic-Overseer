@@ -9,7 +9,6 @@ function main(params) {
     MANUAL: ICON_BASE + "Static.png",
     AI: ICON_BASE + "ChatGPT.png",
     MEDIA: ICON_BASE + "Streaming.png",
-    STEAM: ICON_BASE + "Steam.png",
     ADS: ICON_BASE + "Advertising.png",
     HK: ICON_BASE + "Hong_Kong.png",
     TW: ICON_BASE + "Taiwan.png",
@@ -32,7 +31,46 @@ function main(params) {
 
   const allProxyNames = params.proxies.map(e => e.name);
 
-  // --- 2. 动态区域配置 ---
+  // --- 2. DNS 配置重构 ---
+  params.dns = {
+    "enable": true,
+    "device-network": true,
+    "ipv6": false,
+    "enhanced-mode": "fake-ip",
+    "fake-ip-range": "198.18.0.1/16",
+    "default-nameserver": ["223.5.5.5", "119.29.29.29", "1.1.1.1"],
+    "nameserver": [
+      // 国内传统 UDP
+      "223.5.5.5",
+      "223.6.6.6",
+      "119.29.29.29",
+      "180.76.76.76",
+      // 国内加密 DoT/DoH
+      "tls://dns.alidns.com",
+      "https://dns.alidns.com/dns-query",
+      "https://doh.pub/dns-query"
+    ],
+    "fallback": [
+      // 海外加密 DoH/DoT (走代理解析)
+      "https://dns.google/dns-query",
+      "https://cloudflare-dns.com/dns-query",
+      "https://dns.quad9.net/dns-query",
+      "tls://8.8.8.8",
+      "tls://1.1.1.1",
+      "tls://dns.quad9.net"
+    ],
+    "fallback-filter": {
+      "geoip": true,
+      "geoip-code": "CN",
+      "ipcidr": ["240.0.0.0/4"]
+    },
+    "nameserver-policy": {
+      "geosite:cn": "https://dns.alidns.com/dns-query",
+      "domain:sub.datapipe.top,suc-store.usuc.cc,sub-aylz.koyeb.app": "119.29.29.29"
+    }
+  };
+
+  // --- 3. 动态区域配置 ---
   const regionConfigs = [
     { name: "香港", regex: /港|香港|🇭🇰|HK|Hong Kong/, icon: ICON.HK },
     { name: "台湾", regex: /台|台湾|新北|彰化|TW|Taiwan|🇹🇼/, icon: ICON.TW },
@@ -82,7 +120,7 @@ function main(params) {
     });
   }
 
-  // --- 3. 构建策略组 ---
+  // --- 4. 构建策略组 ---
   const adsGroup = {
     name: "广告拦截",
     type: "select",
@@ -124,26 +162,18 @@ function main(params) {
     icon: ICON.MANUAL
   };
 
-  const steamGroup = {
-    name: "Steam",
-    type: "select",
-    proxies: ["DIRECT", "节点选择", "自动选择"],
-    icon: ICON.STEAM
-  };
-
-  // --- 4. 组装配置 ---
+  // --- 5. 组装配置 ---
   params["proxy-groups"] = [
     nodeSelect,
     autoSelect,
     manualSelect,
     aiGroup,
     { name: "流媒体", type: "url-test", proxies: allProxyNames, icon: ICON.MEDIA, interval: 300 },
-    steamGroup,
     adsGroup,
     ...activeRegionGroups
   ];
 
-  // --- 5. 路由分流规则 ---
+  // --- 6. 路由分流规则 ---
   params.rules = [
     // 订阅地址直连 (防止节点失效无法更新)
     "DOMAIN,sub.datapipe.top,DIRECT",
@@ -156,14 +186,14 @@ function main(params) {
     "IP-CIDR,172.16.0.0/12,DIRECT,no-resolve",
     "IP-CIDR,192.168.0.0/16,DIRECT,no-resolve",
     "DOMAIN-SUFFIX,local,DIRECT",
-    "GEOSITE,steam,Steam",
-    "DOMAIN-SUFFIX,steamcommunity.com,Steam",
+
     "GEOSITE,openai,AI 工具",
     "DOMAIN-SUFFIX,chatgpt.com,AI 工具",
     "DOMAIN-SUFFIX,gemini.google.com,AI 工具",
     "DOMAIN-KEYWORD,generativelanguage,AI 工具",
     "GEOSITE,anthropic,AI 工具",
     "DOMAIN-SUFFIX,claude.ai,AI 工具",
+
     "GEOSITE,youtube,流媒体",
     "GEOSITE,netflix,流媒体",
     "GEOSITE,disney,流媒体",
