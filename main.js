@@ -2,8 +2,18 @@ function main(params) {
   if (!params.proxies || params.proxies.length === 0) return params;
 
   // --- 1. 资源定义与自定义配置 ---
-  const TEST_URL = "http://www.gstatic.com/generate_204"; // 自定义测速链接
-  const TEST_INTERVAL = 60; // 自定义测速间隔（秒）
+  const TEST_URL = "http://www.gstatic.com/generate_204";
+  const TEST_INTERVAL = 60; 
+
+  // --- 新增：GEO 数据库自动更新配置 ---
+  params["geodata-mode"] = true; // 开启使用 dat 文件的模式
+  params["geox-url"] = {
+    "geoip": "https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat",
+    "geosite": "https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat",
+    "mmdb": "https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/country.mmdb"
+  };
+  params["geo-auto-update"] = true;
+  params["geo-update-interval"] = 24; // 单位为小时，建议 24 小时更新一次
 
   const ICON_BASE = "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/";
   const ICON = {
@@ -34,7 +44,7 @@ function main(params) {
 
   const allProxyNames = params.proxies.map(e => e.name);
 
-  // --- 2. DNS 配置重构 ---
+  // --- 2. DNS 配置 (保持不变) ---
   params.dns = {
     "enable": true,
     "device-network": true,
@@ -57,7 +67,7 @@ function main(params) {
     }
   };
 
-  // --- 3. 动态区域配置 ---
+  // --- 3. 动态区域与 AI 分组 (逻辑保持你要求的最新状态) ---
   const regionConfigs = [
     { name: "香港", regex: /港|香港|🇭🇰|HK|Hong Kong/, icon: ICON.HK },
     { name: "台湾", regex: /台|台湾|新北|彰化|TW|Taiwan|🇹🇼/, icon: ICON.TW },
@@ -109,20 +119,11 @@ function main(params) {
     });
   }
 
-  // --- 4. 构建策略组 ---
-  const adsGroup = {
-    name: "广告拦截",
-    type: "select",
-    proxies: ["REJECT", "DIRECT"],
-    icon: ICON.ADS
-  };
+  const adsGroup = { name: "广告拦截", type: "select", proxies: ["REJECT", "DIRECT"], icon: ICON.ADS };
 
-  // AI 工具逻辑优化：排除香港、中国以及“其他”分组中的所有节点
+  // AI 过滤逻辑：排除港、中和“其他”
   const aiProxies = params.proxies
-    .filter(p => 
-      !/港|香港|HK|CN|中国|Direct/i.test(p.name) && 
-      !otherProxies.includes(p.name)
-    )
+    .filter(p => !/港|香港|HK|CN|中国|Direct/i.test(p.name) && !otherProxies.includes(p.name))
     .map(p => p.name);
 
   const aiGroup = {
@@ -141,41 +142,16 @@ function main(params) {
     icon: ICON.GLOBAL
   };
 
-  const autoSelect = {
-    name: "自动选择",
-    type: "url-test",
-    proxies: allProxyNames,
-    icon: ICON.AUTO,
-    interval: TEST_INTERVAL,
-    url: TEST_URL
-  };
+  const autoSelect = { name: "自动选择", type: "url-test", proxies: allProxyNames, icon: ICON.AUTO, interval: TEST_INTERVAL, url: TEST_URL };
+  const manualSelect = { name: "手动选择", type: "select", proxies: allProxyNames, icon: ICON.MANUAL };
 
-  const manualSelect = {
-    name: "手动选择",
-    type: "select",
-    proxies: allProxyNames,
-    icon: ICON.MANUAL
-  };
-
-  // --- 5. 组装配置 ---
+  // --- 4. 组装与分流 (保持不变) ---
   params["proxy-groups"] = [
-    nodeSelect,
-    autoSelect,
-    manualSelect,
-    aiGroup,
-    { 
-      name: "流媒体", 
-      type: "url-test", 
-      proxies: allProxyNames, 
-      icon: ICON.MEDIA, 
-      interval: TEST_INTERVAL, 
-      url: TEST_URL 
-    },
-    adsGroup,
-    ...activeRegionGroups
+    nodeSelect, autoSelect, manualSelect, aiGroup,
+    { name: "流媒体", type: "url-test", proxies: allProxyNames, icon: ICON.MEDIA, interval: TEST_INTERVAL, url: TEST_URL },
+    adsGroup, ...activeRegionGroups
   ];
 
-  // --- 6. 路由分流规则 ---
   params.rules = [
     "DOMAIN,sub.datapipe.top,DIRECT",
     "DOMAIN,suc-store.usuc.cc,DIRECT",
