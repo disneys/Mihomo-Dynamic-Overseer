@@ -11,6 +11,7 @@ function main(params) {
     GLOBAL: ICON_BASE + "Global.png",
     AUTO: ICON_BASE + "Auto.png",
     MANUAL: ICON_BASE + "Static.png",
+    AI: ICON_BASE + "ChatGPT.png",
     HK: ICON_BASE + "Hong_Kong.png",
     TW: ICON_BASE + "Taiwan.png",
     SG: ICON_BASE + "Singapore.png",
@@ -49,11 +50,7 @@ function main(params) {
 
   // --- 3. DNS 配置 (保持不变) ---
   params.dns = {
-    "enable": true,
-    "device-network": true,
-    "ipv6": false,
-    "enhanced-mode": "fake-ip",
-    "fake-ip-range": "198.18.0.1/16",
+    "enable": true, "device-network": true, "ipv6": false, "enhanced-mode": "fake-ip", "fake-ip-range": "198.18.0.1/16",
     "default-nameserver": ["223.5.5.5", "119.29.29.29", "1.1.1.1"],
     "nameserver": [
       "223.5.5.5", "223.6.6.6", "119.29.29.29", "180.76.76.76",
@@ -110,7 +107,12 @@ function main(params) {
     });
   }
 
-  // --- 5. 策略组组装 (已删除 AI、流媒体、广告拦截分组) ---
+  // --- 5. AI 分组逻辑：排除港、中、其他分组中的节点 (完全保留并优化) ---
+  const aiProxies = params.proxies
+    .filter(p => !/港|香港|HK|CN|中国|Direct/i.test(p.name) && !otherProxies.includes(p.name))
+    .map(p => p.name);
+
+  // --- 6. 策略组组装 ---
   const nodeSelect = {
     name: "节点选择",
     type: "select",
@@ -118,14 +120,23 @@ function main(params) {
     icon: ICON.GLOBAL
   };
 
+  const aiGroup = {
+    name: "AI 工具",
+    type: "url-test",
+    proxies: aiProxies.length > 0 ? aiProxies : ["自动选择"],
+    icon: ICON.AI,
+    interval: TEST_INTERVAL,
+    url: TEST_URL
+  };
+
   const autoSelect = { name: "自动选择", type: "url-test", proxies: allProxyNames, icon: ICON.AUTO, interval: TEST_INTERVAL, url: TEST_URL };
   const manualSelect = { name: "手动选择", type: "select", proxies: allProxyNames, icon: ICON.MANUAL };
 
   params["proxy-groups"] = [
-    nodeSelect, autoSelect, manualSelect, ...activeRegionGroups
+    nodeSelect, autoSelect, manualSelect, aiGroup, ...activeRegionGroups
   ];
 
-  // --- 6. 路由规则 (完全替换为 Loyalsoldier 白名单模式) ---
+  // --- 7. 路由规则 (白名单模式 + AI 专项逻辑) ---
   params.rules = [
     "DOMAIN,sub.datapipe.top,DIRECT",
     "DOMAIN,suc-store.usuc.cc,DIRECT",
@@ -137,6 +148,15 @@ function main(params) {
     "RULE-SET,reject,REJECT",
     "RULE-SET,icloud,DIRECT",
     "RULE-SET,apple,DIRECT",
+    
+    // AI 专项：在白名单 general 规则之前拦截
+    "GEOSITE,openai,AI 工具",
+    "DOMAIN-SUFFIX,chatgpt.com,AI 工具",
+    "DOMAIN-SUFFIX,gemini.google.com,AI 工具",
+    "DOMAIN-KEYWORD,generativelanguage,AI 工具",
+    "GEOSITE,anthropic,AI 工具",
+    "DOMAIN-SUFFIX,claude.ai,AI 工具",
+
     "RULE-SET,google,节点选择",
     "RULE-SET,proxy,节点选择",
     "RULE-SET,direct,DIRECT",
