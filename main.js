@@ -1,7 +1,10 @@
 function main(params) {
   if (!params.proxies || params.proxies.length === 0) return params;
 
-  // --- 1. 资源定义 ---
+  // --- 1. 资源定义与自定义配置 ---
+  const TEST_URL = "http://www.gstatic.com/generate_204"; // 自定义测速链接
+  const TEST_INTERVAL = 60; // 自定义测速间隔（秒）
+
   const ICON_BASE = "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/";
   const ICON = {
     GLOBAL: ICON_BASE + "Global.png",
@@ -40,30 +43,14 @@ function main(params) {
     "fake-ip-range": "198.18.0.1/16",
     "default-nameserver": ["223.5.5.5", "119.29.29.29", "1.1.1.1"],
     "nameserver": [
-      // 国内传统 UDP
-      "223.5.5.5",
-      "223.6.6.6",
-      "119.29.29.29",
-      "180.76.76.76",
-      // 国内加密 DoT/DoH
-      "tls://dns.alidns.com",
-      "https://dns.alidns.com/dns-query",
-      "https://doh.pub/dns-query"
+      "223.5.5.5", "223.6.6.6", "119.29.29.29", "180.76.76.76",
+      "tls://dns.alidns.com", "https://dns.alidns.com/dns-query", "https://doh.pub/dns-query"
     ],
     "fallback": [
-      // 海外加密 DoH/DoT (走代理解析)
-      "https://dns.google/dns-query",
-      "https://cloudflare-dns.com/dns-query",
-      "https://dns.quad9.net/dns-query",
-      "tls://8.8.8.8",
-      "tls://1.1.1.1",
-      "tls://dns.quad9.net"
+      "https://dns.google/dns-query", "https://cloudflare-dns.com/dns-query",
+      "https://dns.quad9.net/dns-query", "tls://8.8.8.8", "tls://1.1.1.1", "tls://dns.quad9.net"
     ],
-    "fallback-filter": {
-      "geoip": true,
-      "geoip-code": "CN",
-      "ipcidr": ["240.0.0.0/4"]
-    },
+    "fallback-filter": { "geoip": true, "geoip-code": "CN", "ipcidr": ["240.0.0.0/4"] },
     "nameserver-policy": {
       "geosite:cn": "https://dns.alidns.com/dns-query",
       "domain:sub.datapipe.top,suc-store.usuc.cc,sub-aylz.koyeb.app": "119.29.29.29"
@@ -100,7 +87,8 @@ function main(params) {
         name: r.name,
         type: "url-test",
         icon: r.icon,
-        interval: 300,
+        interval: TEST_INTERVAL,
+        url: TEST_URL,
         tolerance: 50,
         proxies: matched
       });
@@ -114,7 +102,8 @@ function main(params) {
       name: "其他",
       type: "url-test",
       icon: ICON.OTHER,
-      interval: 300,
+      interval: TEST_INTERVAL,
+      url: TEST_URL,
       tolerance: 50,
       proxies: otherProxies
     });
@@ -128,8 +117,12 @@ function main(params) {
     icon: ICON.ADS
   };
 
+  // AI 工具逻辑优化：排除香港、中国以及“其他”分组中的所有节点
   const aiProxies = params.proxies
-    .filter(p => !/港|香港|HK|CN|中国|Direct/i.test(p.name))
+    .filter(p => 
+      !/港|香港|HK|CN|中国|Direct/i.test(p.name) && 
+      !otherProxies.includes(p.name)
+    )
     .map(p => p.name);
 
   const aiGroup = {
@@ -137,7 +130,8 @@ function main(params) {
     type: "url-test",
     proxies: aiProxies.length > 0 ? aiProxies : ["自动选择"],
     icon: ICON.AI,
-    interval: 300
+    interval: TEST_INTERVAL,
+    url: TEST_URL
   };
 
   const nodeSelect = {
@@ -152,7 +146,8 @@ function main(params) {
     type: "url-test",
     proxies: allProxyNames,
     icon: ICON.AUTO,
-    interval: 300
+    interval: TEST_INTERVAL,
+    url: TEST_URL
   };
 
   const manualSelect = {
@@ -168,32 +163,35 @@ function main(params) {
     autoSelect,
     manualSelect,
     aiGroup,
-    { name: "流媒体", type: "url-test", proxies: allProxyNames, icon: ICON.MEDIA, interval: 300 },
+    { 
+      name: "流媒体", 
+      type: "url-test", 
+      proxies: allProxyNames, 
+      icon: ICON.MEDIA, 
+      interval: TEST_INTERVAL, 
+      url: TEST_URL 
+    },
     adsGroup,
     ...activeRegionGroups
   ];
 
   // --- 6. 路由分流规则 ---
   params.rules = [
-    // 订阅地址直连 (防止节点失效无法更新)
     "DOMAIN,sub.datapipe.top,DIRECT",
     "DOMAIN,suc-store.usuc.cc,DIRECT",
     "DOMAIN,sub-aylz.koyeb.app,DIRECT",
-
     "GEOSITE,category-ads-all,广告拦截",
     "IP-CIDR,127.0.0.0/8,DIRECT,no-resolve",
     "IP-CIDR,10.0.0.0/8,DIRECT,no-resolve",
     "IP-CIDR,172.16.0.0/12,DIRECT,no-resolve",
     "IP-CIDR,192.168.0.0/16,DIRECT,no-resolve",
     "DOMAIN-SUFFIX,local,DIRECT",
-
     "GEOSITE,openai,AI 工具",
     "DOMAIN-SUFFIX,chatgpt.com,AI 工具",
     "DOMAIN-SUFFIX,gemini.google.com,AI 工具",
     "DOMAIN-KEYWORD,generativelanguage,AI 工具",
     "GEOSITE,anthropic,AI 工具",
     "DOMAIN-SUFFIX,claude.ai,AI 工具",
-
     "GEOSITE,youtube,流媒体",
     "GEOSITE,netflix,流媒体",
     "GEOSITE,disney,流媒体",
