@@ -4,25 +4,13 @@ function main(params) {
   // --- 1. 资源定义与自定义配置 ---
   const TEST_URL = "http://www.gstatic.com/generate_204";
   const TEST_INTERVAL = 60; 
-
-  // --- 新增：GEO 数据库自动更新配置 ---
-  params["geodata-mode"] = true; // 开启使用 dat 文件的模式
-  params["geox-url"] = {
-    "geoip": "https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat",
-    "geosite": "https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat",
-    "mmdb": "https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/country.mmdb"
-  };
-  params["geo-auto-update"] = true;
-  params["geo-update-interval"] = 24; // 单位为小时，建议 24 小时更新一次
+  const RULE_BASE = "https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/";
 
   const ICON_BASE = "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/";
   const ICON = {
     GLOBAL: ICON_BASE + "Global.png",
     AUTO: ICON_BASE + "Auto.png",
     MANUAL: ICON_BASE + "Static.png",
-    AI: ICON_BASE + "ChatGPT.png",
-    MEDIA: ICON_BASE + "Streaming.png",
-    ADS: ICON_BASE + "Advertising.png",
     HK: ICON_BASE + "Hong_Kong.png",
     TW: ICON_BASE + "Taiwan.png",
     SG: ICON_BASE + "Singapore.png",
@@ -44,7 +32,22 @@ function main(params) {
 
   const allProxyNames = params.proxies.map(e => e.name);
 
-  // --- 2. DNS 配置 (保持不变) ---
+  // --- 2. 注入 Rule Providers (白名单模式必需) ---
+  params["rule-providers"] = {
+    "reject": { type: "http", behavior: "domain", url: RULE_BASE + "reject.txt", path: "./ruleset/reject.yaml", interval: 86400 },
+    "icloud": { type: "http", behavior: "domain", url: RULE_BASE + "icloud.txt", path: "./ruleset/icloud.yaml", interval: 86400 },
+    "apple": { type: "http", behavior: "domain", url: RULE_BASE + "apple.txt", path: "./ruleset/apple.yaml", interval: 86400 },
+    "google": { type: "http", behavior: "domain", url: RULE_BASE + "google.txt", path: "./ruleset/google.yaml", interval: 86400 },
+    "proxy": { type: "http", behavior: "domain", url: RULE_BASE + "proxy.txt", path: "./ruleset/proxy.yaml", interval: 86400 },
+    "direct": { type: "http", behavior: "domain", url: RULE_BASE + "direct.txt", path: "./ruleset/direct.yaml", interval: 86400 },
+    "private": { type: "http", behavior: "domain", url: RULE_BASE + "private.txt", path: "./ruleset/private.yaml", interval: 86400 },
+    "cncidr": { type: "http", behavior: "ipcidr", url: RULE_BASE + "cncidr.txt", path: "./ruleset/cncidr.yaml", interval: 86400 },
+    "lancidr": { type: "http", behavior: "ipcidr", url: RULE_BASE + "lancidr.txt", path: "./ruleset/lancidr.yaml", interval: 86400 },
+    "telegramcidr": { type: "http", behavior: "ipcidr", url: RULE_BASE + "telegramcidr.txt", path: "./ruleset/telegramcidr.yaml", interval: 86400 },
+    "applications": { type: "http", behavior: "classical", url: RULE_BASE + "applications.txt", path: "./ruleset/applications.yaml", interval: 86400 }
+  };
+
+  // --- 3. DNS 配置 (保持不变) ---
   params.dns = {
     "enable": true,
     "device-network": true,
@@ -67,7 +70,7 @@ function main(params) {
     }
   };
 
-  // --- 3. 动态区域与 AI 分组 (逻辑保持你要求的最新状态) ---
+  // --- 4. 动态区域识别 (核心逻辑完全保留) ---
   const regionConfigs = [
     { name: "香港", regex: /港|香港|🇭🇰|HK|Hong Kong/, icon: ICON.HK },
     { name: "台湾", regex: /台|台湾|新北|彰化|TW|Taiwan|🇹🇼/, icon: ICON.TW },
@@ -94,13 +97,7 @@ function main(params) {
     const matched = params.proxies.filter(p => r.regex.test(p.name)).map(p => p.name);
     if (matched.length > 0) {
       activeRegionGroups.push({
-        name: r.name,
-        type: "url-test",
-        icon: r.icon,
-        interval: TEST_INTERVAL,
-        url: TEST_URL,
-        tolerance: 50,
-        proxies: matched
+        name: r.name, type: "url-test", icon: r.icon, interval: TEST_INTERVAL, url: TEST_URL, tolerance: 50, proxies: matched
       });
       matched.forEach(name => assignedProxies.add(name));
     }
@@ -109,32 +106,11 @@ function main(params) {
   const otherProxies = allProxyNames.filter(name => !assignedProxies.has(name));
   if (otherProxies.length > 0) {
     activeRegionGroups.push({
-      name: "其他",
-      type: "url-test",
-      icon: ICON.OTHER,
-      interval: TEST_INTERVAL,
-      url: TEST_URL,
-      tolerance: 50,
-      proxies: otherProxies
+      name: "其他", type: "url-test", icon: ICON.OTHER, interval: TEST_INTERVAL, url: TEST_URL, tolerance: 50, proxies: otherProxies
     });
   }
 
-  const adsGroup = { name: "广告拦截", type: "select", proxies: ["REJECT", "DIRECT"], icon: ICON.ADS };
-
-  // AI 过滤逻辑：排除港、中和“其他”
-  const aiProxies = params.proxies
-    .filter(p => !/港|香港|HK|CN|中国|Direct/i.test(p.name) && !otherProxies.includes(p.name))
-    .map(p => p.name);
-
-  const aiGroup = {
-    name: "AI 工具",
-    type: "url-test",
-    proxies: aiProxies.length > 0 ? aiProxies : ["自动选择"],
-    icon: ICON.AI,
-    interval: TEST_INTERVAL,
-    url: TEST_URL
-  };
-
+  // --- 5. 策略组组装 (已删除 AI、流媒体、广告拦截分组) ---
   const nodeSelect = {
     name: "节点选择",
     type: "select",
@@ -145,34 +121,30 @@ function main(params) {
   const autoSelect = { name: "自动选择", type: "url-test", proxies: allProxyNames, icon: ICON.AUTO, interval: TEST_INTERVAL, url: TEST_URL };
   const manualSelect = { name: "手动选择", type: "select", proxies: allProxyNames, icon: ICON.MANUAL };
 
-  // --- 4. 组装与分流 (保持不变) ---
   params["proxy-groups"] = [
-    nodeSelect, autoSelect, manualSelect, aiGroup,
-    { name: "流媒体", type: "url-test", proxies: allProxyNames, icon: ICON.MEDIA, interval: TEST_INTERVAL, url: TEST_URL },
-    adsGroup, ...activeRegionGroups
+    nodeSelect, autoSelect, manualSelect, ...activeRegionGroups
   ];
 
+  // --- 6. 路由规则 (完全替换为 Loyalsoldier 白名单模式) ---
   params.rules = [
     "DOMAIN,sub.datapipe.top,DIRECT",
     "DOMAIN,suc-store.usuc.cc,DIRECT",
     "DOMAIN,sub-aylz.koyeb.app,DIRECT",
-    "GEOSITE,category-ads-all,广告拦截",
-    "IP-CIDR,127.0.0.0/8,DIRECT,no-resolve",
-    "IP-CIDR,10.0.0.0/8,DIRECT,no-resolve",
-    "IP-CIDR,172.16.0.0/12,DIRECT,no-resolve",
-    "IP-CIDR,192.168.0.0/16,DIRECT,no-resolve",
-    "DOMAIN-SUFFIX,local,DIRECT",
-    "GEOSITE,openai,AI 工具",
-    "DOMAIN-SUFFIX,chatgpt.com,AI 工具",
-    "DOMAIN-SUFFIX,gemini.google.com,AI 工具",
-    "DOMAIN-KEYWORD,generativelanguage,AI 工具",
-    "GEOSITE,anthropic,AI 工具",
-    "DOMAIN-SUFFIX,claude.ai,AI 工具",
-    "GEOSITE,youtube,流媒体",
-    "GEOSITE,netflix,流媒体",
-    "GEOSITE,disney,流媒体",
-    "GEOSITE,cn,DIRECT",
-    "GEOIP,cn,DIRECT",
+    "RULE-SET,applications,DIRECT",
+    "DOMAIN,clash.razord.top,DIRECT",
+    "DOMAIN,yacd.haishan.me,DIRECT",
+    "RULE-SET,private,DIRECT",
+    "RULE-SET,reject,REJECT",
+    "RULE-SET,icloud,DIRECT",
+    "RULE-SET,apple,DIRECT",
+    "RULE-SET,google,节点选择",
+    "RULE-SET,proxy,节点选择",
+    "RULE-SET,direct,DIRECT",
+    "RULE-SET,lancidr,DIRECT",
+    "RULE-SET,cncidr,DIRECT",
+    "RULE-SET,telegramcidr,节点选择",
+    "GEOIP,LAN,DIRECT",
+    "GEOIP,CN,DIRECT",
     "MATCH,节点选择"
   ];
 
