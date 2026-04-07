@@ -3,7 +3,7 @@ function main(params) {
 
   // --- 1. 资源定义与自定义配置 ---
   const TEST_URL = "http://www.gstatic.com/generate_204";
-  const TEST_INTERVAL = 60; 
+  const TEST_INTERVAL = 300; 
   const RULE_BASE = "https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/";
 
   const ICON_BASE = "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/";
