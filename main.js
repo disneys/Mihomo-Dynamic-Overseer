@@ -75,7 +75,7 @@ function main(params) {
     { name: "日本", regex: /日本|🇯🇵|JP|Japan/, icon: ICON.JP },
     { name: "美国", regex: /美|美国|🇺🇸|US|United States/, icon: ICON.US },
     { name: "韩国", regex: /韩|韩国|🇰🇷|KR|Korea/, icon: ICON.KR },
-    { name: "英国", regex: /英国|🇬🇧|GB|UK|United Kingdom/, icon: ICON.UK },
+    { name: "英国", regex: /^(?!剩余流量[:：]?\s*\d+(?:\.\d+)?\s*GB$).*(英国|🇬🇧|GB|UK|United Kingdom)/, icon: ICON.UK },
     { name: "德国", regex: /德|德国|🇩🇪|DE|Germany/, icon: ICON.DE },
     { name: "法国", regex: /法|法国|🇫🇷|FR|France/, icon: ICON.FR },
     { name: "加拿大", regex: /加拿大|🇨🇦|CA|Canada/, icon: ICON.CA },
