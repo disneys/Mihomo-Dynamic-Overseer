@@ -2,7 +2,8 @@ function main(params) {
   if (!params.proxies || params.proxies.length === 0) return params;
 
   // --- 1. 资源定义与自定义配置 ---
-  const TEST_URL = "http://www.gstatic.com/generate_204";
+  // const TEST_URL = "http://www.gstatic.com/generate_204";
+  const TEST_URL = "http://www.apple.com/library/test/success.html";
   const TEST_INTERVAL = 300; 
   const RULE_BASE = "https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/";
 
