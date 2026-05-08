@@ -72,22 +72,22 @@ function main(params) {
 
   // --- 4. 动态区域识别 (核心逻辑完全保留) ---
   const regionConfigs = [
-    { name: "香港", regex: /港|香港|🇭🇰|HK|Hong Kong/, icon: ICON.HK },
-    { name: "台湾", regex: /台|台湾|新北|彰化|TW|Taiwan|🇹🇼/, icon: ICON.TW },
-    { name: "新加坡", regex: /新加坡|狮城|SG|Singapore|🇸🇬/, icon: ICON.SG },
-    { name: "日本", regex: /日本|🇯🇵|JP|Japan/, icon: ICON.JP },
-    { name: "美国", regex: /美|美国|🇺🇸|US|United States/, icon: ICON.US },
-    { name: "韩国", regex: /韩|韩国|🇰🇷|KR|Korea/, icon: ICON.KR },
-    { name: "英国", regex: /^(?!剩余流量[:：]?\s*\d+(?:\.\d+)?\s*GB$).*(英国|🇬🇧|GB|UK|United Kingdom)/, icon: ICON.UK },
-    { name: "德国", regex: /德|德国|🇩🇪|DE|Germany/, icon: ICON.DE },
-    { name: "法国", regex: /法|法国|🇫🇷|FR|France/, icon: ICON.FR },
-    { name: "加拿大", regex: /加拿大|🇨🇦|CA|Canada/, icon: ICON.CA },
-    { name: "澳洲", regex: /澳|澳大利亚|🇦🇺|AU|Australia/, icon: ICON.AU },
-    { name: "俄罗斯", regex: /俄|俄罗斯|🇷🇺|RU|Russia/, icon: ICON.RU },
-    { name: "印度", regex: /印|印度|🇮🇳|IN|India/, icon: ICON.IN },
-    { name: "荷兰", regex: /荷|荷兰|🇳🇱|NL|Netherlands/, icon: ICON.NL },
-    { name: "土耳其", regex: /土|土耳其|🇹🇷|TR|Turkey/, icon: ICON.TR },
-    { name: "巴西", regex: /巴西|🇧🇷|BR|Brazil/, icon: ICON.BR }
+    { name: "香港", regex: /香港|HK|Hong\s*Kong|🇭🇰/i, icon: ICON.HK },
+    { name: "台湾", regex: /台[湾灣]|臺[湾灣北]|台湾|台灣|新北|彰化|TW|Taiwan|🇹🇼/i, icon: ICON.TW },
+    { name: "新加坡", regex: /新加坡|狮城|SG|Singapore|🇸🇬/i, icon: ICON.SG },
+    { name: "日本", regex: /日本|JP|Japan|🇯🇵/i, icon: ICON.JP },
+    { name: "美国", regex: /美[国國东西]|美国|美國|US|United\s*States|🇺🇸/i, icon: ICON.US },
+    { name: "韩国", regex: /[韩韓][国國]|韩国|韓國|KR|Korea|🇰🇷/i, icon: ICON.KR },
+    { name: "英国", regex: /^(?!剩余流量[:：]?\s*\d+(?:\.\d+)?\s*GB$).*(英[国國]|英国|英國|UK|United\s*Kingdom|🇬🇧)/i, icon: ICON.UK },
+    { name: "德国", regex: /德[国國]|德国|德國|DE|Germany|🇩🇪/i, icon: ICON.DE },
+    { name: "法国", regex: /法[国國]|法国|法國|FR|France|🇫🇷/i, icon: ICON.FR },
+    { name: "加拿大", regex: /加拿大|CA|Canada|🇨🇦/i, icon: ICON.CA },
+    { name: "澳洲", regex: /澳洲|澳大利亚|澳大利亞|AU|Australia|🇦🇺/i, icon: ICON.AU },
+    { name: "俄罗斯", regex: /俄[罗羅]斯|俄罗斯|俄羅斯|RU|Russia|🇷🇺/i, icon: ICON.RU },
+    { name: "印度", regex: /印度|IN|India|🇮🇳/i, icon: ICON.IN },
+    { name: "荷兰", regex: /荷[兰蘭]|荷兰|荷蘭|NL|Netherlands|🇳🇱/i, icon: ICON.NL },
+    { name: "土耳其", regex: /土耳其|TR|Turkey|🇹🇷/i, icon: ICON.TR },
+    { name: "巴西", regex: /巴西|Brazil|🇧🇷/i, icon: ICON.BR }
   ];
 
   let assignedProxies = new Set();
@@ -112,7 +112,7 @@ function main(params) {
 
   // --- 5. AI 分组逻辑：排除港、中、其他分组中的节点 (完全保留并优化) ---
   const aiProxies = params.proxies
-    .filter(p => !/港|香港|HK|CN|中国|Direct/i.test(p.name) && !otherProxies.includes(p.name))
+    .filter(p => !/港|香港|HK|CN|中国|Direct/i.test(p.name) && assignedProxies.has(p.name))
     .map(p => p.name);
 
   // --- 6. 策略组组装 ---
