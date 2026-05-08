@@ -28,8 +28,7 @@ function main(params) {
     AU: ICON_BASE + "Australia.png",
     RU: ICON_BASE + "Russia.png",
     IN: ICON_BASE + "India.png",
-    NL: ICON_BASE + "Netherlands.png",
-    TR: ICON_BASE + "Turkey.png",
+      TR: ICON_BASE + "Turkey.png",
     BR: ICON_BASE + "Brazil.png",
     OTHER: ICON_BASE + "Airport.png"
   };
@@ -85,8 +84,7 @@ function main(params) {
     { name: "澳洲", regex: /澳洲|澳大利亚|澳大利亞|AU|Australia|🇦🇺/i, icon: ICON.AU },
     { name: "俄罗斯", regex: /俄[罗羅]斯|俄罗斯|俄羅斯|RU|Russia|🇷🇺/i, icon: ICON.RU },
     { name: "印度", regex: /印度|IN|India|🇮🇳/i, icon: ICON.IN },
-    { name: "荷兰", regex: /荷[兰蘭]|荷兰|荷蘭|NL|Netherlands|🇳🇱/i, icon: ICON.NL },
-    { name: "土耳其", regex: /土耳其|TR|Turkey|🇹🇷/i, icon: ICON.TR },
+      { name: "土耳其", regex: /土耳其|TR|Turkey|🇹🇷/i, icon: ICON.TR },
     { name: "巴西", regex: /巴西|Brazil|🇧🇷/i, icon: ICON.BR }
   ];
 
