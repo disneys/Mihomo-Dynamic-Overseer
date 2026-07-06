@@ -139,6 +139,7 @@ function main(params) {
 
   // --- 7. 路由规则 (白名单模式 + AI 专项逻辑) ---
   params.rules = [
+  	"DOMAIN,sinaimg.cn,DIRECT",
     "DOMAIN,huan666.de,DIRECT",
     "DOMAIN,free.lyclaude.site,DIRECT",
     "DOMAIN,wzw.pp.ua,DIRECT",
