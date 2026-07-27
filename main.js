@@ -139,7 +139,7 @@ function main(params) {
 
   // --- 7. 路由规则 (白名单模式 + AI 专项逻辑) ---
   params.rules = [
-  	//"DOMAIN,sinaimg.cn,DIRECT",
+//"DOMAIN,sinaimg.cn,DIRECT",
     //"DOMAIN,huan666.de,DIRECT",
     //"DOMAIN,free.lyclaude.site,DIRECT",
     //"DOMAIN,wzw.pp.ua,DIRECT",
@@ -164,7 +164,6 @@ function main(params) {
     //"DOMAIN,gancaopu.com,DIRECT",
     //"DOMAIN,agentrouter.org,节点选择",
     //"DOMAIN,aigw.telecomjs.com,DIRECT",
-    "DOMAIN,sub.datapipe.top,DIRECT",
     "DOMAIN,suc-store.usuc.cc,DIRECT",
     "DOMAIN,sub-aylz.koyeb.app,DIRECT",
     "DOMAIN,ghfast.top,DIRECT",
